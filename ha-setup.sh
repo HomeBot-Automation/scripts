@@ -3,7 +3,7 @@
 # Backup apt's sources.list
 sudo mv /etc/apt/sources.list /etc/apt/sources.list.bak
 # Remove unnecessary architecture
-dpkg --remove-architecture armhf
+sudo dpkg --remove-architecture armhf
 # set up our debian repo as the apt source
 echo "deb http://deb.homebotautomation.com/debian bullseye main" | sudo tee /etc/apt/sources.list
 # Add repo's public key
