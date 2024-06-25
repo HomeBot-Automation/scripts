@@ -46,7 +46,9 @@ if [ ! -f /etc/stub-resolv.conf ]; then
     sudo cp /etc/resolv.conf /etc/stub-resolv.conf
 fi
 # update the system
-sudo apt update
+until sudo apt update; do
+    sleep 15
+done
 sudo apt upgrade -y
 # install home assistant required packages
 sudo apt install -y apparmor cifs-utils curl dbus jq libglib2.0-bin lsb-release network-manager nfs-common systemd-journal-remote systemd-resolved udisks2 wget libcgroup1
