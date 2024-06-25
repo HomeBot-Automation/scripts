@@ -61,7 +61,7 @@ sudo systemctl enable apparmor
 sudo rm -f /etc/resolv.conf
 sudo ln -s /etc/stub-resolv.conf /etc/resolv.conf
 # install home assistant os-agent
-if [! -f os-agent.temp ]; then
+if [ ! -f os-agent.temp ]; then
     until wget -O os-agent.temp https://github.com/home-assistant/os-agent/releases/download/1.6.0/os-agent_1.6.0_linux_aarch64.deb; do
 	rm os-agent.temp
 	sleep 15
