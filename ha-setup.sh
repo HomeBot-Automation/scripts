@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Set TESTING to a default value 0 if it is not already set
+: ${TESTING:=0}
+
 check_deb_installed() {
     local deb_file="$1"
     
@@ -28,18 +31,40 @@ check_deb_installed() {
     fi
 }
 
-# Check if apt repo has already been set up
-if [ $(grep -c "deb.homebotautomation.com" /etc/apt/sources.list) -eq 0 ]; then
-    # Backup apt's sources.list
-    sudo mv /etc/apt/sources.list /etc/apt/sources.list.bak
-    # Remove unnecessary architecture
-    sudo dpkg --remove-architecture armhf
-    # set up our debian repo as the apt source
-    echo "deb http://deb.homebotautomation.com/debian bullseye main" | sudo tee /etc/apt/sources.list
+if [ $TESTING -gt 0 ]; then
+    if [ $(grep -c "deb.debian.org" /etc/apt/sources.list) -eq 0 ]; then
+        sudo mv /etc/apt/sources.list /etc/apt/sources.list.bak
+        cat <<EOF | sudo tee /etc/apt/sources.list
+# Debian Bookworm
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+#deb-src http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+#deb-src http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+
+deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
+#deb-src http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
+
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+#deb-src http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+EOF
+    fi
 fi
-if [ ! -f /etc/apt/trusted.gpg.d/homebotautomation.gpg ]; then
-    # Add repo's public key
-    sudo curl -sSL http://deb.homebotautomation.com/public.key -o /etc/apt/trusted.gpg.d/homebotautomation.gpg
+
+if [ $TESTING -eq 0 ]; then
+    # Check if apt repo has already been set up
+    if [ $(grep -c "deb.homebotautomation.com" /etc/apt/sources.list) -eq 0 ]; then
+        # Backup apt's sources.list
+        sudo mv /etc/apt/sources.list /etc/apt/sources.list.bak
+        # Remove unnecessary architecture
+        sudo dpkg --remove-architecture armhf
+        # set up our debian repo as the apt source
+        echo "deb http://deb.homebotautomation.com/debian bullseye main" | sudo tee /etc/apt/sources.list
+    fi
+    if [ ! -f /etc/apt/trusted.gpg.d/homebotautomation.gpg ]; then
+        # Add repo's public key
+        sudo curl -sSL http://deb.homebotautomation.com/public.key -o /etc/apt/trusted.gpg.d/homebotautomation.gpg
+    fi
 fi
 if [ ! -f /etc/stub-resolv.conf ]; then
     # copy working resolv.conf file
@@ -49,17 +74,19 @@ fi
 until sudo apt update; do
     sleep 15
 done
+sleep 5
 sudo apt upgrade -y
 # install home assistant required packages
-sudo apt install -y apparmor cifs-utils curl dbus jq libglib2.0-bin lsb-release network-manager nfs-common systemd-journal-remote systemd-resolved udisks2 wget libcgroup1
+sudo apt install -y apparmor cifs-utils curl dbus jq libglib2.0-bin lsb-release network-manager nfs-common systemd-journal-remote systemd-resolved udisks2 wget cgroup-tools
 # enable apparmor and cgroup v1 to make home assistant happy
 if [ $(grep -c "apparmor" /boot/orangepiEnv.txt) -eq 0 ]; then
-    sudo sed -i 's/extraargs=cma=64M/extraargs=cma=64M apparmor=1 security=apparmor systemd.unified_cgroup_hierarchy=0/g' /boot/orangepiEnv.txt
+    sudo sed -i 's/extraargs=cma=128M/extraargs=cma=128M apparmor=1 security=apparmor systemd.unified_cgroup_hierarchy=0/g' /boot/orangepiEnv.txt
 fi
 sudo systemctl enable apparmor
 # replace new resolv.conf symlink with a symlink to a resolv.conf file that works
 sudo rm -f /etc/resolv.conf
 sudo ln -s /etc/stub-resolv.conf /etc/resolv.conf
+sleep 5
 # install home assistant os-agent
 if [ ! -f os-agent.temp ]; then
     until wget -O os-agent.temp https://github.com/home-assistant/os-agent/releases/download/1.6.0/os-agent_1.6.0_linux_aarch64.deb; do
