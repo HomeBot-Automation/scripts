@@ -30,7 +30,13 @@ check_deb_installed() {
         return 1
     fi
 }
-
+if [ -e /etc/apt/sources.list.d/docker.list ]; then
+    sudo rm -rvf /etc/apt/sources.list.d/docker.list
+    until sudo apt update; do
+        sleep 5
+    done
+    sudo apt purge -y ~ndocker
+fi
 if [ $TESTING -gt 0 ]; then
     if [ $(grep -c "deb.debian.org" /etc/apt/sources.list) -eq 0 ]; then
         sudo mv /etc/apt/sources.list /etc/apt/sources.list.bak
@@ -50,7 +56,6 @@ deb http://security.debian.org/debian-security bookworm-security main contrib no
 EOF
     fi
 fi
-
 if [ $TESTING -eq 0 ]; then
     # Check if apt repo has already been set up
     if [ $(grep -c "deb.homebotautomation.com" /etc/apt/sources.list) -eq 0 ]; then
@@ -59,7 +64,7 @@ if [ $TESTING -eq 0 ]; then
         # Remove unnecessary architecture
         sudo dpkg --remove-architecture armhf
         # set up our debian repo as the apt source
-        echo "deb http://deb.homebotautomation.com/debian bullseye main" | sudo tee /etc/apt/sources.list
+        echo "deb http://deb.homebotautomation.com/debian bookworm main" | sudo tee /etc/apt/sources.list
     fi
     if [ ! -f /etc/apt/trusted.gpg.d/homebotautomation.gpg ]; then
         # Add repo's public key
@@ -86,6 +91,22 @@ sudo systemctl enable apparmor
 # replace new resolv.conf symlink with a symlink to a resolv.conf file that works
 sudo rm -f /etc/resolv.conf
 sudo ln -s /etc/stub-resolv.conf /etc/resolv.conf
+if ! check_deb_installed docker-ce; then
+    sleep 5
+    # Add Docker's official GPG key:
+    sudo apt update
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+    # Add the repository to Apt sources:
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt update
+    sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+fi
 sleep 5
 # install home assistant os-agent
 if [ ! -f os-agent.temp ]; then
