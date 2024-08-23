@@ -22,31 +22,33 @@ PACKAGE_LOG="$OLD_PACKAGE_DIR/package_replacements.log"
 # Function to organize packages into subdirectories
 organize_packages() {
     local distro=$1
+    local component=$2
 
-    # Create pool/$distro directory if it does not exist
-    mkdir -p "$BASEDIR/pool/$distro"
+    # Create pool/$distro/$component directory if it does not exist
+    mkdir -p "$BASEDIR/pool/$distro/$component"
 
+    # Move .deb packages into the appropriate subdirectories
     for dir in "${DIR_LIST[@]}"; do
-        # Create subdirectory under pool/$distro if it doesn't exist
-        mkdir -p "$BASEDIR/pool/$distro/$dir"
+        # Check if there are .deb files starting with the directory prefix
+        deb_files=$(find "$BASEDIR" -maxdepth 1 -type f -name "${dir}*.deb")
+        
+        if [[ -n "$deb_files" ]]; then
+            # Only create the directory if there are matching .deb files
+            mkdir -p "$BASEDIR/pool/$distro/$component/$dir"
+            
+            # Process each .deb file
+            for package in $deb_files; do
+                package_name=$(basename "$package" | cut -d'_' -f1)
+                existing_package=$(find "$BASEDIR/pool/$distro/$component/$dir" -type f -name "${package_name}_*.deb")
 
-        # Find and move .deb files starting with the directory's prefix
-        find "$BASEDIR" -maxdepth 1 -type f -name "${dir}*.deb" | while read -r package; do
-            # Extract the package name up to the first underscore
-            package_name=$(basename "$package" | cut -d'_' -f1)
+                if [[ -n "$existing_package" ]]; then
+                    mv "$existing_package" "$OLD_PACKAGE_DIR"
+                    echo "Replaced: $existing_package with $package" >> "$PACKAGE_LOG"
+                fi
 
-            # Check if a package with the same name exists in the target directory
-            existing_package=$(find "$BASEDIR/pool/$distro/$dir" -type f -name "${package_name}_*.deb")
-
-            if [[ -n "$existing_package" ]]; then
-                # Move existing package to old package directory and log the action
-                mv "$existing_package" "$OLD_PACKAGE_DIR"
-                echo "Replaced: $existing_package with $package" >> "$PACKAGE_LOG"
-            fi
-
-            # Move the new package to the target directory
-            mv "$package" "$BASEDIR/pool/$distro/$dir/"
-        done
+                mv "$package" "$BASEDIR/pool/$distro/$component/$dir/"
+            done
+        fi
     done
 }
 
@@ -56,9 +58,9 @@ scan_packages() {
     local component=$2
     local architecture=$3
 
-    local poolpath="pool/$distro/$component"
+    local poolpath="$BASEDIR/pool/$distro/$component"
     # Output directory for the Packages files
-    local outpath="dists/$distro/$component/binary-$architecture"
+    local outpath="$BASEDIR/dists/$distro/$component/binary-$architecture"
 
     echo "Processing $distro / $component / $architecture"
 
@@ -100,7 +102,7 @@ generate_release() {
 update_repository() {
     for distro in $MAIN_DISTRIBUTIONS; do
         # Organize packages before updating repository metadata
-        organize_packages $distro
+        organize_packages $distro $component
         
         for component in $COMPONENTS; do
             for architecture in $ARCHITECTURES; do
@@ -114,6 +116,9 @@ update_repository() {
 }
 
 # Navigate to the base directory
+if [ ! -e "$BASEDIR" ]; then
+    mkdir -p "$BASEDIR"
+fi
 cd $BASEDIR || { echo "Failed to change directory to $BASEDIR"; exit 1; }
 
 # Update the repository
