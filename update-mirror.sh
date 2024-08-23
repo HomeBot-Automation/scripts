@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Define the base directory for the main Debian repository
 BASEDIR="/var/spool/apt-mirror/mirror/debian"
 
@@ -11,8 +12,10 @@ ARCHITECTURES="arm64"
 # Define the list of directories to create and check for packages
 DIR_LIST=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "lib0" "lib1" "lib2" "lib3" "lib4" "lib5" "lib6" "lib7" "lib8" "lib9" "liba" "libb" "libc" "libd" "libe" "libf" "libg" "libh" "libi" "libj" "libk" "libl" "libm" "libn" "libo" "libp" "libq" "libr" "libs" "libt" "libu" "libv" "libw" "libx" "liby" "libz" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z")
 
+DOWNLOADED_PACKAGES="$SCRIPT_DIR/downloaded_packages"
+
 # Directory for storing old packages
-OLD_PACKAGE_DIR="./old_packages"
+OLD_PACKAGE_DIR="$SCRIPT_DIR/old_packages"
 mkdir -p "$OLD_PACKAGE_DIR"
 
 # File to log package replacements
@@ -30,7 +33,7 @@ organize_packages() {
     # Move .deb packages into the appropriate subdirectories
     for dir in "${DIR_LIST[@]}"; do
         # Check if there are .deb files starting with the directory prefix
-        deb_files=$(find "$BASEDIR" -maxdepth 1 -type f -name "${dir}*.deb")
+        deb_files=$(find "$DOWNLOADED_PACKAGES" -maxdepth 1 -type f -name "${dir}*.deb")
         
         if [[ -n "$deb_files" ]]; then
             # Only create the directory if there are matching .deb files
@@ -102,9 +105,8 @@ generate_release() {
 update_repository() {
     for distro in $MAIN_DISTRIBUTIONS; do
         # Organize packages before updating repository metadata
-        organize_packages $distro $component
-        
         for component in $COMPONENTS; do
+            organize_packages $distro $component
             for architecture in $ARCHITECTURES; do
                 scan_packages $distro $component $architecture
             done
