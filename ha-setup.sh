@@ -64,7 +64,7 @@ if [ $TESTING -eq 0 ]; then
         # Remove unnecessary architecture
         sudo dpkg --remove-architecture armhf
         # set up our debian repo as the apt source
-        echo "deb http://deb.homebotautomation.com/debian bookworm main" | sudo tee /etc/apt/sources.list
+        echo "deb https://deb.homebotautomation.com/debian bookworm main" | sudo tee /etc/apt/sources.list
     fi
     if [ ! -f /etc/apt/trusted.gpg.d/homebotautomation.gpg ]; then
         # Add repo's public key
@@ -91,20 +91,24 @@ sudo systemctl enable apparmor
 # replace new resolv.conf symlink with a symlink to a resolv.conf file that works
 sudo rm -f /etc/resolv.conf
 sudo ln -s /etc/stub-resolv.conf /etc/resolv.conf
-if ! check_deb_installed docker-ce; then
-    sleep 5
-    # Add Docker's official GPG key:
-    sudo apt update
-    sudo install -m 0755 -d /etc/apt/keyrings
-    sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-    sudo chmod a+r /etc/apt/keyrings/docker.asc
+if [ $TESTING -gt 0 ]; then
+    if ! check_deb_installed docker-ce; then
+        sleep 5
+        # Add Docker's official GPG key:
+        sudo apt update
+        sudo install -m 0755 -d /etc/apt/keyrings
+        sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-    # Add the repository to Apt sources:
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    sudo apt update
+        # Add the repository to Apt sources:
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt update
+    fi
+fi
+if ! check_deb_installed docker-ce; then
     sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 fi
 sleep 5
