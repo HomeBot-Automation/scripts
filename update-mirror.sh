@@ -61,9 +61,9 @@ scan_packages() {
     local component=$2
     local architecture=$3
 
-    local poolpath="$BASEDIR/pool/$distro/$component"
+    local poolpath="pool/$distro/$component"
     # Output directory for the Packages files
-    local outpath="$BASEDIR/dists/$distro/$component/binary-$architecture"
+    local outpath="dists/$distro/$component/binary-$architecture"
 
     echo "Processing $distro / $component / $architecture"
 
@@ -73,7 +73,7 @@ scan_packages() {
     # Create the directory if it does not exist
     mkdir -p $outpath
 
-    # Generate Packages file
+    # Generate Packages file, specifying poolpath relative to the current directory
     dpkg-scanpackages $poolpath /dev/null > $outpath/Packages
 
     # Compress the Packages file with gzip and xz
