@@ -7,7 +7,7 @@ BASEDIR="/var/spool/apt-mirror/mirror/debian"
 # Define distributions, components, and architectures
 MAIN_DISTRIBUTIONS="bookworm"
 COMPONENTS="main"
-ARCHITECTURES="arm64"
+ARCHITECTURES="arm64 armhf"  # Added armhf to the list
 
 # Define the list of directories to create and check for packages
 DIR_LIST=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "lib0" "lib1" "lib2" "lib3" "lib4" "lib5" "lib6" "lib7" "lib8" "lib9" "liba" "libb" "libc" "libd" "libe" "libf" "libg" "libh" "libi" "libj" "libk" "libl" "libm" "libn" "libo" "libp" "libq" "libr" "libs" "libt" "libu" "libv" "libw" "libx" "liby" "libz" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z")
@@ -74,11 +74,13 @@ scan_packages() {
     mkdir -p $outpath
 
     # Generate Packages file, specifying poolpath relative to the current directory
-    dpkg-scanpackages $poolpath /dev/null > $outpath/Packages
+    dpkg-scanpackages $poolpath /dev/null > $outpath/Packages 2>/dev/null
 
-    # Compress the Packages file with gzip and xz
-    gzip -9c $outpath/Packages > $outpath/Packages.gz
-    xz -c9 $outpath/Packages > $outpath/Packages.xz
+    # Compress the Packages file with gzip and xz, only if the Packages file exists and is not empty
+    if [[ -s $outpath/Packages ]]; then
+        gzip -9c $outpath/Packages > $outpath/Packages.gz
+        xz -c9 $outpath/Packages > $outpath/Packages.xz
+    fi
 }
 
 # Generate Release files with apt-ftparchive

@@ -62,7 +62,7 @@ if [ $TESTING -eq 0 ]; then
         # Backup apt's sources.list
         sudo mv /etc/apt/sources.list /etc/apt/sources.list.bak
         # Remove unnecessary architecture
-        sudo dpkg --remove-architecture armhf
+        # sudo dpkg --remove-architecture armhf
         # set up our debian repo as the apt source
         echo "deb https://deb.homebotautomation.com/debian bookworm main" | sudo tee /etc/apt/sources.list
     fi
@@ -108,12 +108,12 @@ if [ $TESTING -gt 0 ]; then
         sudo apt update
     fi
 fi
+sleep 5
 if ! check_deb_installed docker-ce; then
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 fi
-sleep 5
 # install home assistant os-agent
-if [ ! -f os-agent.temp ]; then
+if [ ! -f os-agent_1.6.0_linux_aarch64.deb ]; then
     until wget -O os-agent.temp https://github.com/home-assistant/os-agent/releases/download/1.6.0/os-agent_1.6.0_linux_aarch64.deb; do
 	rm os-agent.temp
 	sleep 15
@@ -125,7 +125,7 @@ if ! check_deb_installed ./os-agent_1.6.0_linux_aarch64.deb; then
 fi
 # install home assistant supervisor
 # when prompted to select machine type, I selected raspberrypi4-64
-if [ ! -f homeassistant-supervised.temp ]; then
+if [ ! -f homeassistant-supervised.deb ]; then
     until wget -O homeassistant-supervised.temp https://github.com/home-assistant/supervised-installer/releases/latest/download/homeassistant-supervised.deb; do
         rm homeassistant-supervised.temp
 	sleep 15
