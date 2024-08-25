@@ -109,7 +109,7 @@ if [ $TESTING -gt 0 ]; then
     fi
 fi
 if ! check_deb_installed docker-ce; then
-    sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 fi
 sleep 5
 # install home assistant os-agent
