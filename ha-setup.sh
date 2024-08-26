@@ -155,5 +155,9 @@ if ! check_deb_installed ./homeassistant-supervised.deb; then
 fi
 cd ..
 rm -rvf scripts
+history -c
 rm -rvf ~/.bash_history
+history -w
+history -c
+sync
 systemctl reboot -i
