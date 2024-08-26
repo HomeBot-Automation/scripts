@@ -30,6 +30,14 @@ check_deb_installed() {
         return 1
     fi
 }
+
+# set timezone to mountain time
+sudo timedatectl set-timezone America/Denver
+
+# sync time with NTP servers
+sudo chronyc -a 'burst 4/4'
+sleep 5
+
 if [ -e /etc/apt/sources.list.d/docker.list ]; then
     sudo rm -rvf /etc/apt/sources.list.d/docker.list
     until sudo apt update; do
