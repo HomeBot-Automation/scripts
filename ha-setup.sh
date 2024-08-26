@@ -112,6 +112,16 @@ sleep 5
 if ! check_deb_installed docker-ce; then
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 fi
+if [ $TESTING -eq 0 ]; then
+    if [ ! -f /usr/bin/auto-update ]; then
+        sudo cp auto-update /usr/bin
+    fi
+    # Define the cron job entry
+    CRON_JOB="*/15 * * * * /usr/bin/auto-update"
+
+    # Add the cron job to the crontab if it's not already present
+    (sudo crontab -l | grep -F "$CRON_JOB") || (sudo crontab -l; echo "$CRON_JOB") | sudo crontab -
+fi
 # install home assistant os-agent
 if [ ! -f os-agent_1.6.0_linux_aarch64.deb ]; then
     until wget -O os-agent.temp https://github.com/home-assistant/os-agent/releases/download/1.6.0/os-agent_1.6.0_linux_aarch64.deb; do
@@ -135,4 +145,7 @@ fi
 if ! check_deb_installed ./homeassistant-supervised.deb; then
     sudo apt install -y ./homeassistant-supervised.deb
 fi
-/usr/sbin/reboot
+cd ..
+rm -rvf scripts
+rm -rvf ~/.bash_history
+systemctl reboot -i
