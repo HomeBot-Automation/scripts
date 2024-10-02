@@ -132,7 +132,7 @@ if [ $TESTING -eq 0 ]; then
 fi
 # install home assistant os-agent
 if [ ! -f os-agent_1.6.0_linux_aarch64.deb ]; then
-    until wget -O os-agent.temp https://github.com/home-assistant/os-agent/releases/download/1.6.0/os-agent_1.6.0_linux_aarch64.deb; do
+    until wget -O os-agent.temp https://version.homebotautomation.com/os-agent_1.6.0_linux_aarch64.deb; do
 	rm os-agent.temp
 	sleep 15
     done
@@ -144,7 +144,7 @@ fi
 # install home assistant supervisor
 # when prompted to select machine type, I selected raspberrypi4-64
 if [ ! -f homeassistant-supervised.deb ]; then
-    until wget -O homeassistant-supervised.temp https://github.com/home-assistant/supervised-installer/releases/latest/download/homeassistant-supervised.deb; do
+    until wget -O homeassistant-supervised.temp https://version.homebotautomation.com/homeassistant-supervised.deb; do
         rm homeassistant-supervised.temp
 	sleep 15
     done
