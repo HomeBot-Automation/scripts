@@ -25,7 +25,7 @@ Instructions for imaging the OrangePi 5b for HomeBot
 3. Open terminal with Ctrl+Alt+T
 4. Run:
    ``` bash
-   git clone https://github.com/HomeBot-Automation/scripts.git
+   git clone --branch homebot-ha https://github.com/HomeBot-Automation/scripts.git
    cd scripts
    ./ha-setup.sh
    ```
