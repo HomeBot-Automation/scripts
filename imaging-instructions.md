@@ -29,3 +29,4 @@ Instructions for imaging the OrangePi 5b for HomeBot
    cd scripts
    ./ha-setup.sh
    ```
+When prompted to choose a system, make sure you pick raspberrypi4-64.
