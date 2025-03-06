@@ -1,7 +1,7 @@
 #!/bin/bash
 
-OUTPUT=$(until sudo apt update; do sleep 15; done)
-STATUS=$(echo $OUTPUT | grep -c "All packages are up to date")
+OUTPUT=$(until sudo apt update; do sleep 15; done; sudo apt --dry-run full-upgrade -y)
+STATUS=$(echo $OUTPUT | grep -c "0 upgraded, 0 newly installed")
 if [ $STATUS -eq 0 ]; then
     sudo apt upgrade -y
     sudo apt autoremove -y
