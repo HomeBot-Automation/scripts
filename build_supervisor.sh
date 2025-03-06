@@ -64,7 +64,8 @@ IMAGE_TAG="ha.homebotautomation.com/homebot/aarch64-hassio-supervisor:$LATEST_TA
 docker buildx build \
     --platform linux/arm64 \
     --build-arg SUPERVISOR_VERSION="$LATEST_TAG" \
-    --build-arg BUILD_FROM="ghcr.io/home-assistant/aarch64-base-python:3.12-alpine3.20" \
+    --build-arg BUILD_FROM="ghcr.io/home-assistant/aarch64-base-python:latest" \
+    --build-arg BUILD_ARCH="aarch64" \
     -t "$IMAGE_TAG" \
     --load .
 
