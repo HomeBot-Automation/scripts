@@ -32,10 +32,19 @@ echo "Using temporary sources.list located at: $TMP_SOURCES"
 # Update package lists using only the temporary sources
 sudo apt update -o Dir::Etc::sourcelist="$TMP_SOURCES"
 
-# Simulate a full-upgrade to get all packages (including dependencies)
-echo "Fetching list of all packages (including dependencies)..."
+# Get list of held-back packages
+HELD_BACK_PACKAGES=$(apt-mark showhold)
+
+# Simulate a full-upgrade and get packages that will actually be installed
+echo "Fetching list of upgradable packages..."
 UPGRADE_PACKAGES=$(sudo apt --dry-run -o Dir::Etc::sourcelist="$TMP_SOURCES" full-upgrade | awk '/^Inst / {print $2}')
 
+# Filter out held-back packages from the list
+for held in $HELD_BACK_PACKAGES; do
+    UPGRADE_PACKAGES=$(echo "$UPGRADE_PACKAGES" | grep -v "^$held$")
+done
+
+# If there are no packages to upgrade, exit
 if [[ -z "$UPGRADE_PACKAGES" ]]; then
     echo "No packages need upgrading."
     rm -f "$TMP_SOURCES"
@@ -50,8 +59,8 @@ mkdir -p "$LOCAL_PKG_DIR"
 # Change to the download directory
 pushd "$LOCAL_PKG_DIR" > /dev/null
 
-# Download each package including dependencies
-echo "Downloading packages and their dependencies..."
+# Download only packages that will actually install (excluding held-back)
+echo "Downloading packages that will be installed..."
 for pkg in $UPGRADE_PACKAGES; do
     apt download -o Dir::Etc::sourcelist="$TMP_SOURCES" "$pkg"
 done
@@ -62,7 +71,7 @@ sudo chown -R "$USER:$USER" "$LOCAL_PKG_DIR"
 # Return to the original directory
 popd > /dev/null
 
-echo "Packages (including dependencies) downloaded to $LOCAL_PKG_DIR"
+echo "Filtered packages downloaded to $LOCAL_PKG_DIR"
 
 # Ensure the remote server has a clean directory setup
 echo "Preparing the destination directory on the remote server..."
@@ -80,10 +89,10 @@ ssh "$USERNAME@$SERVER" <<EOF
 EOF
 
 # Transfer package files via SCP
-echo "Transferring package files to the remote server..."
+echo "Transferring filtered package files to the remote server..."
 scp "$LOCAL_PKG_DIR"/*.deb "$USERNAME@$SERVER:~/downloaded_packages/"
 
-echo "All package files and dependencies transferred to $USERNAME@$SERVER:~/downloaded_packages/"
+echo "Filtered package files transferred to $USERNAME@$SERVER:~/downloaded_packages/"
 
 # Delete local downloaded packages directory after transfer
 rm -rf "$LOCAL_PKG_DIR"
